@@ -3,7 +3,7 @@ import "dotenv/config";
 
 const app = express();
 
-let books = [
+let db_books = [
   { id: 1, title: "1984", author: "George Orwell", pages: 328 },
   { id: 2, title: "To Kill a Mockingbird", author: "Harper Lee", pages: 281 },
   {
@@ -104,12 +104,67 @@ app.get("/", (req, res) => {
   res.send("Hello World");
 });
 
+// title, author, sort, filter, pagination, limit
 app.get("/books", (req, res) => {
+  const { search, sort, sortBy, filter, filterBy, page, pageSize } = req.query;
+  console.log(req.query);
+  let books = db_books;
+  if (sort && sortBy) books = sortBooks(books, sort, sortBy);
+  if (filter) books = filterBooks(books, filter, filterBy);
+  if (search) books = searchBooks(books, search);
+  if (page && pageSize) books = pagination(books, page, pageSize);
   res.json(books);
 });
 
+function pagination(books, page, pageSize) {
+  const startIndex = (page - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  return books.slice(startIndex, endIndex);
+}
+
+function sortBooks(books, sort, sortBy) {
+  if (sort === "id" || sort === "pages") {
+    return books.sort((a, b) => {
+      if (sortBy === "asc") {
+        return a[sort] - b[sort];
+      } else {
+        return b[sort] - a[sort];
+      }
+    });
+  } else {
+    return books.sort((a, b) => {
+      if (sortBy === "asc") {
+        return a[sort].localeCompare(b[sort]);
+      } else {
+        return b[sort].localeCompare(a[sort]);
+      }
+    });
+  }
+}
+
+function filterBooks(books, filter, filterBy) {
+  let filteredBooks = books;
+  if (filter === "title") {
+    filteredBooks = books.filter((book) =>
+      book.title.toLowerCase().includes(filterBy.toLowerCase())
+    );
+  } else if (filter === "author") {
+    filteredBooks = books.filter((book) =>
+      book.author.toLowerCase().includes(filterBy.toLowerCase())
+    );
+  }
+  return filteredBooks;
+}
+function searchBooks(books, search) {
+  return books.filter(
+    (book) =>
+      book.title.toLowerCase().includes(search.toLowerCase()) ||
+      book.author.toLowerCase().includes(search.toLowerCase())
+  );
+}
+
 app.get("/books/:id", (req, res) => {
-  const book = books.find((book) => book.id === parseInt(req.params.id));
+  const book = db_books.find((book) => book.id === parseInt(req.params.id));
   if (!book) {
     return res.status(404).json({ message: "Book not found" });
   }
@@ -121,25 +176,28 @@ app.post("/books", (req, res) => {
   if (!newBook.title || !newBook.author || !newBook.pages) {
     return res.status(400).json({ message: "Invalid book data" });
   }
-  newBook.id = books.length + 1;
-  books.push(newBook);
+  newBook.id = db_books.length + 1;
+  db_books.push(newBook);
   res.status(201).json(newBook);
 });
 
 app.put("/books/:id", (req, res) => {
-  const book = books.find((book) => book.id === parseInt(req.params.id));
+  const book = db_books.find((book) => book.id === parseInt(req.params.id));
   if (!book) {
     return res.status(404).json({ message: "Book not found" });
   }
-  book.title = req.body.title;
+  const { title, author, pages } = req.body;
+  if (title) book.title = title;
+  if (author) book.author = author;
+  if (pages) book.pages = pages;
   res.json(book);
 });
 
 app.delete("/books/:id", (req, res) => {
-  const book = books.find((book) => book.id === parseInt(req.params.id));
+  const book = db_books.find((book) => book.id === parseInt(req.params.id));
   if (!book) {
     return res.status(404).json({ message: "Book not found" });
   }
-  books = books.filter((book) => book.id !== parseInt(req.params.id));
+  db_books = db_books.filter((book) => book.id !== parseInt(req.params.id));
   res.status(204).send();
 });
