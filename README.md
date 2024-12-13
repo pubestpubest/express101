@@ -5,6 +5,9 @@ A simple RESTful API for managing a collection of books built with Express.js.
 ## Features
 
 - CRUD operations for books
+- Advanced search and filtering
+- Sorting capabilities
+- Pagination support
 - JSON-based responses
 - Input validation
 - Error handling
@@ -46,16 +49,36 @@ A simple RESTful API for managing a collection of books built with Express.js.
 ### Get all books
 
 `GET /books`
-Returns a list of all books.
+
+Returns a list of all books. Supports the following query parameters:
+
+- `search`: Search books by title or author
+- `sort`: Field to sort by (`id`, `title`, `author`, `pages`)
+- `sortBy`: Sort direction (`asc` or `desc`)
+- `filter`: Field to filter by (`title` or `author`)
+- `filterBy`: Value to filter with
+- `page`: Page number for pagination
+- `pageSize`: Number of items per page
+
+Example queries:
+
+```
+/books?sort=pages&sortBy=desc
+/books?search=tolkien
+/books?filter=author&filterBy=George
+/books?page=1&pageSize=10
+```
 
 ### Get a specific book
 
 `GET /books/:id`
+
 Returns a single book by ID.
 
 ### Create a new book
 
 `POST /books`
+
 Creates a new book. Required fields in request body:
 
 - `title`: string
@@ -65,13 +88,17 @@ Creates a new book. Required fields in request body:
 ### Update a book
 
 `PUT /books/:id`
-Updates a book's title. Required fields in request body:
+
+Updates a book. Optional fields in request body:
 
 - `title`: string
+- `author`: string
+- `pages`: number
 
 ### Delete a book
 
 `DELETE /books/:id`
+
 Deletes a book by ID.
 
 ## Response Formats
@@ -96,6 +123,26 @@ Deletes a book by ID.
   "author": "George Orwell",
   "pages": 328
 }
+```
+
+## Example Queries
+
+### Search for books by Tolkien
+
+```
+GET /books?search=tolkien
+```
+
+### Get the longest books first
+
+```
+GET /books?sort=pages&sortBy=desc
+```
+
+### Get books by George Orwell with pagination
+
+```
+GET /books?filter=author&filterBy=George&page=1&pageSize=10
 ```
 
 ## Development
